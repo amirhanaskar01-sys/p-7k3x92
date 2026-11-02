@@ -401,6 +401,7 @@ html.locked .lock{display:flex}
   <symbol id="i-habit" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></symbol>
   <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/></symbol>
   <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/></symbol>
+  <symbol id="i-fire" viewBox="0 0 24 24"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-4-1-6 1-10z"/></symbol>
   <symbol id="i-practice" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></symbol>
   <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/></symbol>
   <symbol id="i-sport" viewBox="0 0 24 24"><path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/></symbol>
@@ -429,6 +430,7 @@ html.locked .lock{display:flex}
     <button data-nav="habits"><svg class="i"><use href="#i-habit"/></svg>Привычки</button>
     <button data-nav="health"><svg class="i"><use href="#i-heart"/></svg>Здоровье</button>
     <button data-nav="inbox"><svg class="i"><use href="#i-inbox"/></svg>Ящик</button>
+    <button data-nav="basket"><svg class="i"><use href="#i-fire"/></svg>Корзина</button>
     <button data-nav="practice"><svg class="i"><use href="#i-practice"/></svg>Практики</button>
   </nav>
   <div class="grp bt">Управление</div>
@@ -470,6 +472,7 @@ html.locked .lock{display:flex}
       <textarea id="gDesc" rows="2" placeholder="Описание (необязательно)" maxlength="400" aria-label="Описание"></textarea>
       <div class="grow">
         <label class="chip"><svg class="i"><use href="#i-cal"/></svg><span id="gdl">Срок</span><input type="date" id="gDue" aria-label="Срок"></label>
+        <input id="gNeed" type="number" min="1" class="sel" placeholder="Задач до 100%" aria-label="Сколько задач до 100 процентов" style="width:140px">
         <label class="chip" id="gsc"><svg class="i"><use href="#i-goals"/></svg><span id="gsl">Спринт</span><select id="gSprint" aria-label="Спринт"></select></label>
         <button class="go" type="submit">Добавить цель</button>
       </div>
@@ -488,6 +491,7 @@ html.locked .lock{display:flex}
       <div class="rw"><span>Автоматически архивировать выполненные задачи</span><select class="sel" id="selAuto"><option value="0">Не архивировать</option><option value="7">Через 7 дней</option><option value="30">Через 30 дней</option><option value="90">Через 90 дней</option></select></div>
       <p>Архивные задачи не показываются в списках, но остаются в отчётах и в прогрессе целей.</p>
     </section>
+    <section class="pn"><h2>Приложение</h2><p id="appVer"></p><div class="btns"><button class="btn" id="updBtn" type="button">Проверить обновление</button></div><p>Загрузили новые файлы на хостинг? Нажмите кнопку: приложение сбросит кэш и откроется заново. Ваши данные не пострадают.</p></section>
     <section class="pn"><h2>PIN-код</h2>
       <p>Закрывает приложение четырьмя цифрами при запуске и после минуты в фоне. Это защита от случайного взгляда, а не шифрование. Если забудете PIN, придётся стирать данные приложения, поэтому делайте резервную копию.</p>
       <div class="rw"><span id="pinSt"></span><div class="btns" style="margin:0"><input id="pinIn" class="sel" type="password" inputmode="numeric" maxlength="4" placeholder="4 цифры" aria-label="PIN-код" style="width:110px"><button class="btn" id="pinSet" type="button">Установить</button><button class="btn dng" id="pinOff" type="button">Убрать</button></div></div>
@@ -516,6 +520,7 @@ html.locked .lock{display:flex}
   <div class="ct" id="bdView" hidden></div>
   <div class="ct" id="ibView" hidden></div>
   <div class="ct" id="prView" hidden></div>
+  <div class="ct" id="bkView" hidden></div>
   <div class="ct" id="repView" hidden></div>
   <div id="stratView" hidden>
     <div class="stb"><button class="go" id="addCard" type="button">+ Карточка</button><span>Двойной клик по полотну — новая карточка. Чтобы соединить, потяните точку справа на другую карточку.</span></div>
@@ -569,7 +574,7 @@ html.locked .lock{display:flex}
   var monday = k => { var d = parse(k); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return key(d); };
   var today = () => key(new Date());
   var raw = k => state.tasks[k] || [];
-  var get = k => raw(k).filter(t => !t.ar);
+  var get = k => raw(k).filter(t => !t.ar && !t.b);
   var esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   var cap = s => s.charAt(0).toUpperCase() + s.slice(1);
   var $ = id => document.getElementById(id);
@@ -630,6 +635,7 @@ html.locked .lock{display:flex}
     $('bdView').hidden = view !== 'budget';
     $('ibView').hidden = view !== 'inbox';
     $('prView').hidden = view !== 'practice';
+    $('bkView').hidden = view !== 'basket';
     if (view !== 'guitar') metStop();
     $('repView').hidden = view !== 'reports';
     $('stratView').hidden = view !== 'strategy';
@@ -648,6 +654,7 @@ html.locked .lock{display:flex}
       if (view === 'budget'){ $('title').textContent = 'Бюджет'; renderBd(); return; }
       if (view === 'inbox'){ $('title').textContent = 'Ящик'; renderIb(); return; }
       if (view === 'practice'){ $('title').textContent = 'Практики'; renderPr(); return; }
+      if (view === 'basket'){ $('title').textContent = 'Корзина'; renderBk(); return; }
       if (view === 'guitar'){ $('title').textContent = 'Гитара'; renderGt(); return; }
       if (LB[view]){ $('title').textContent = LB[view][0]; renderLb(); return; }
       if (view === 'sport'){ $('title').textContent = 'Спорт'; renderSp(); return; }
@@ -712,16 +719,21 @@ html.locked .lock{display:flex}
 
   function tmeta(t){
     var g = t.g && state.goals.find(x => x.id === t.g);
-    return (g || t.time) ? '<div class="mt">' + (g ? '<em class="gt">' + esc(g.title) + '</em>' : '') + (t.time ? '<time class="tm">' + t.time + '</time>' : '') + '</div>' : '';
+    return (g || t.time || t.f) ? '<div class="mt">' + (t.f ? '<em class="gt">в корзине</em>' : '') + (g ? '<em class="gt">' + esc(g.title) + '</em>' : '') + (t.time ? '<time class="tm">' + t.time + '</time>' : '') + '</div>' : '';
   }
   function gsel(t, k){
     if (!state.goals.length) return '';
     return '<span class="gl' + (t.g ? ' on' : '') + '" title="Привязать к цели"><svg class="i"><use href="#i-goals"/></svg><select class="gs' + (t.g ? ' on' : '') + '" data-id="' + t.id + '" data-day="' + k + '" aria-label="Цель задачи"><option value="">Без цели</option>' +
       state.goals.map(g => '<option value="' + g.id + '"' + (g.id === t.g ? ' selected' : '') + '>' + esc(g.title) + '</option>').join('') + '</select></span>';
   }
+  function gStep(g){ return (100 / g.need).toFixed(1).replace(/\.0$/, ''); }
+  function gPct(g, s){ s = s || gstats(g.id); return g.need ? Math.min(100, Math.round(s.done / g.need * 100)) : (s.tot ? Math.round(s.done / s.tot * 100) : 0); }
+  function gAdd(g){
+    return '<div class="ab" style="margin:8px 0"><input type="text" class="sel" data-gat placeholder="Новая задача для цели" maxlength="120" style="flex:1 1 150px" aria-label="Задача для цели"><button class="btn" data-x="gt" data-id="' + g.id + '" type="button">+ Задача</button><button class="btn" data-x="gf" data-id="' + g.id + '" type="button">В корзину</button></div><p class="count" style="margin:0 0 6px">Задач до 100%: <input type="number" min="0" class="sel" data-gneed="' + g.id + '" value="' + (g.need || '') + '" placeholder="авто" style="width:84px" aria-label="Сколько задач до 100 процентов"></p>';
+  }
   function gstats(id){
     var tot = 0, done = 0, list = [];
-    Object.keys(state.tasks).sort().forEach(k => state.tasks[k].forEach(t => { if (t.g === id){ tot++; if (t.done) done++; list.push([k, t]); } }));
+    Object.keys(state.tasks).sort().forEach(k => state.tasks[k].forEach(t => { if (t.g === id && !t.b){ tot++; if (t.done) done++; list.push([k, t]); } }));
     return { tot: tot, done: done, list: list };
   }
   function grow(t, k){
@@ -734,7 +746,7 @@ html.locked .lock{display:flex}
     var gs = state.goals.slice().sort((a, b) => (a.due || '9') < (b.due || '9') ? -1 : (a.due || '9') > (b.due || '9') ? 1 : 0);
     if (!gs.length){ $('goalList').innerHTML = '<p class="empty">Целей пока нет. Создайте первую выше, а задачи привязывайте к ней при добавлении.</p>'; return; }
     $('goalList').innerHTML = gs.map(g => {
-      var s = gstats(g.id), pct = s.tot ? Math.round(s.done / s.tot * 100) : 0, due = '';
+      var s = gstats(g.id), pct = gPct(g, s), due = '';
       if (g.due){
         var n = Math.round((parse(g.due) - parse(today())) / 864e5), late = n < 0 && pct < 100;
         due = '<span class="' + (late ? 'late' : '') + '">до ' + fShort.format(parse(g.due)) + ' · ' + (pct === 100 ? 'выполнено' : n > 0 ? 'осталось ' + n + ' дн.' : n === 0 ? 'срок сегодня' : 'просрочено на ' + (-n) + ' дн.') + '</span>';
@@ -743,7 +755,7 @@ html.locked .lock{display:flex}
         (g.desc ? '<p class="gd">' + esc(g.desc) + '</p>' : '') +
         (due ? '<p class="gm">' + due + '</p>' : '') +
         '<div class="bar"><b style="width:' + pct + '%"></b></div>' +
-        '<p class="count">' + (s.tot ? s.done + ' из ' + s.tot + ' задач · ' + pct + '%' : 'Нет привязанных задач') + '</p>' +
+        '<p class="count">' + (g.need ? s.done + ' из ' + g.need + ' задач · ' + pct + '% · каждая задача +' + gStep(g) + '%' : (s.tot ? s.done + ' из ' + s.tot + ' задач · ' + pct + '%' : 'Нет привязанных задач')) + '</p>' + gAdd(g) +
         (s.tot ? '<ul class="list">' + s.list.map(x => grow(x[1], x[0])).join('') + '</ul>' : '') + '</article>';
     }).join('');
   }
@@ -776,7 +788,7 @@ html.locked .lock{display:flex}
   function renderSprint(){
     var cq = qOf(new Date()), q = viewQ == null ? cq : viewQ, r = qRange(q), gs = state.goals.filter(g => g.s === q), sum = 0;
     var cardsHtml = gs.map(g => {
-      var s = gstats(g.id), pct = s.tot ? Math.round(s.done / s.tot * 100) : 0;
+      var s = gstats(g.id), pct = gPct(g, s);
       sum += pct;
       return '<div class="sg"><div class="sgt"><b>' + esc(g.title) + '</b><span>' + pct + '%</span></div><div class="bar"><b style="width:' + pct + '%"></b></div><p class="count">' + (s.tot ? s.done + ' из ' + s.tot + ' задач' : 'Нет привязанных задач') + '</p></div>';
     }).join('');
@@ -1356,7 +1368,7 @@ html.locked .lock{display:flex}
   function devSkills(){
     var sg = state.goals.filter(g => g.sk), tot = sg.reduce((a, g) => a + (state.fg[g.id] || 0), 0), tr = dv().trash;
     var h = '<div class="pn dv"><h2>Мои навыки</h2>' + (sg.length ? sg.map(g => {
-      var m = state.fg[g.id] || 0, s = gstats(g.id), p = s.tot ? Math.round(s.done / s.tot * 100) : 0;
+      var m = state.fg[g.id] || 0, s = gstats(g.id), p = gPct(g, s);
       return '<div class="sg"><div class="sgt"><b>' + esc(g.title) + '</b><span>' + lvl(m) + '</span></div><div class="bar"><b style="width:' + p + '%"></b></div><p class="count">В фокусе: ' + fmtMin(m) + (s.tot ? ' · уроков: ' + s.done + ' из ' + s.tot : '') + '</p></div>';
     }).join('') + '<p class="count" style="margin-top:10px">Всего в фокусе: ' + fmtMin(tot) + '</p>' : '<p class="empty">Пока нет навыков. Примите навык дня или добавьте свой.</p>') +
       '<div class="ab" style="margin-top:12px"><input id="skNew" type="text" placeholder="Свой навык, например гитара" maxlength="60" aria-label="Новый навык"><button class="btn" data-skadd type="button">Добавить навык</button></div>' +
@@ -1930,7 +1942,7 @@ html.locked .lock{display:flex}
     save(); render();
   });
 
-  var GRP = [['plan', 'Планирование', ['home', 'inbox', 'tasks', 'goals', 'strategy', 'reports']], ['dev', 'Развитие', ['dev', 'practice', 'habits', 'health', 'sport']], ['fun', 'Увлечения', ['guitar', 'beat', 'media', 'books']], ['cash', 'Деньги', ['money', 'budget']]];
+  var GRP = [['plan', 'Планирование', ['home', 'inbox', 'basket', 'tasks', 'goals', 'strategy', 'reports']], ['dev', 'Развитие', ['dev', 'practice', 'habits', 'health', 'sport']], ['fun', 'Увлечения', ['guitar', 'beat', 'media', 'books']], ['cash', 'Деньги', ['money', 'budget']]];
   var lastMv = null;
   function buildMenu(){
     var nav = document.querySelector('.side .nav'), lab = nav && nav.previousElementSibling, btn = {}, placed = {}, groups = GRP.slice();
@@ -2119,6 +2131,85 @@ html.locked .lock{display:flex}
     if (el.dataset && el.dataset.x === 'rn'){ state.rv[t] = Object.assign(state.rv[t] || {}, { n: el.value }); save(); }
   });
 
+  var APP_V = '2';
+  $('appVer').textContent = 'Версия приложения: ' + APP_V;
+  $('updBtn').addEventListener('click', async () => {
+    try {
+      if ('caches' in window){ var ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); }
+      if (navigator.serviceWorker){ var rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r => r.unregister())); }
+    } catch (e) {}
+    location.reload();
+  });
+  function burnSweep(){
+    var t = today(), c = 0;
+    Object.keys(state.tasks).forEach(k => { if (k < t) state.tasks[k].forEach(x => { if (x.f && !x.done && !x.b){ x.b = 1; c++; } }); });
+    return c;
+  }
+  function bkAll(){
+    var out = [];
+    Object.keys(state.tasks).forEach(k => state.tasks[k].forEach(x => { if (x.f) out.push([k, x]); }));
+    return out;
+  }
+  function bRow(p){
+    var k = p[0], x = p[1], t = today(), g = x.g && state.goals.find(y => y.id === x.g), st = g && g.need ? ' +' + gStep(g) + '%' : '';
+    return '<li class="task' + (x.done ? ' done' : '') + '"><label><input type="checkbox" data-id="' + x.id + '" data-day="' + k + '"' + (x.done ? ' checked' : '') + '><span>' + esc(x.text) + '</span></label><div class="ta"><button class="del" data-del="' + x.id + '" data-day="' + k + '" aria-label="Удалить" type="button">&times;</button></div><div class="mt">' +
+      (g ? '<em class="gt">' + esc(g.title) + st + '</em>' : '<small style="color:var(--muted)">без цели</small>') + '<small style="color:var(--muted)">' + (x.done ? (g ? 'капнуло в цель' : 'выполнено') : k === t ? 'сгорит в полночь' : 'на ' + fShort.format(parse(k))) + '</small></div></li>';
+  }
+  function renderBk(){
+    var t = today(), all = bkAll(), burned = all.filter(p => p[1].b).sort((a, b) => a[0] < b[0] ? 1 : -1), live = all.filter(p => !p[1].b && !p[1].ar);
+    var now = live.filter(p => p[0] === t), later = live.filter(p => p[0] > t), dr = all.filter(p => p[1].done && !p[1].b).length;
+    $('bkView').innerHTML = '<div class="stats"><div class="st"><b>' + now.filter(p => !p[1].done).length + '</b><span>горит сегодня</span></div><div class="st"><b>' + dr + '</b><span>капнуло в цели</span></div><div class="st"><b>' + burned.length + '</b><span>сгорело</span></div></div>' +
+      '<form class="ab" id="bkForm" style="margin-top:16px" autocomplete="off"><input id="bkT" type="text" placeholder="Что бросить в корзину?" maxlength="120" aria-label="Задача"><select class="sel" id="bkG" aria-label="Цель"><option value="">Без цели</option>' + state.goals.map(g => '<option value="' + g.id + '">' + esc(g.title) + '</option>').join('') + '</select><select class="sel" id="bkD" aria-label="День"><option value="0">Сегодня</option><option value="1">Завтра</option></select><button class="btn" type="submit">Бросить</button></form>' +
+      '<p class="count" style="margin:10px 4px 0">Невыполненное к полуночи сгорает. Выполненное прибавляет процент к цели.</p>' +
+      (now.length ? '<h2 class="dh">Сегодня</h2><ul class="list">' + now.map(bRow).join('') + '</ul>' : '<p class="empty">Корзина на сегодня пуста.</p>') +
+      (later.length ? '<h2 class="dh">Позже</h2><ul class="list">' + later.map(bRow).join('') + '</ul>' : '') +
+      (burned.length ? '<h2 class="dh">Сгорело</h2>' + burned.slice(0, 15).map(p => '<div class="rw"><span>' + esc(p[1].text) + '<br><small>' + fShort.format(parse(p[0])) + '</small></span><button class="btn" data-x="bu" data-id="' + p[1].id + '" data-k="' + p[0] + '" type="button">Вернуть на сегодня</button></div>').join('') : '');
+  }
+  document.addEventListener('click', e => {
+    var b = e.target.closest('button[data-x]');
+    if (!b) return;
+    var a = b.dataset.x, t = today();
+    if (a === 'gt' || a === 'gf'){
+      var tx = b.closest('.ab').querySelector('[data-gat]').value.trim();
+      if (!tx) return;
+      var tk = { id: uid(), text: tx, done: false, g: b.dataset.id };
+      if (a === 'gf') tk.f = 1;
+      (state.tasks[t] = raw(t)).push(tk);
+    }
+    else if (a === 'bu'){
+      var bx = raw(b.dataset.k).find(y => y.id === b.dataset.id);
+      if (!bx) return;
+      delete bx.b; moveTask(bx.id, b.dataset.k);
+    }
+    else return;
+    save(); render();
+  });
+  document.addEventListener('submit', e => {
+    if (e.target.id !== 'bkForm') return;
+    e.preventDefault();
+    var tx = $('bkT').value.trim();
+    if (!tx) return;
+    var dk = shift(today(), Number($('bkD').value)), tk = { id: uid(), text: tx, done: false, f: 1 };
+    if ($('bkG').value) tk.g = $('bkG').value;
+    (state.tasks[dk] = raw(dk)).push(tk);
+    save(); render();
+  });
+  document.addEventListener('change', e => {
+    var el = e.target;
+    if (el.dataset && el.dataset.gneed){
+      var gg = state.goals.find(x => x.id === el.dataset.gneed);
+      if (gg){ gg.need = Math.max(0, Math.floor(Number(el.value) || 0)); save(); render(); }
+      return;
+    }
+    if (!el.matches || !el.matches('.task input') || !el.checked) return;
+    var x = raw(el.dataset.day).find(y => y.id === el.dataset.id), g = x && x.g && state.goals.find(y => y.id === x.g);
+    if (!g) return;
+    toast('Капнуло' + (g.need ? ' +' + gStep(g) + '%' : '') + ' в цель «' + g.title + '»: теперь ' + gPct(g) + '%');
+  });
+  var renderBurn = render;
+  render = function(){ if (burnSweep()) save(); renderBurn(); };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && burnSweep()){ save(); render(); } });
+
   var PINK = 'planner.pin', pinBuf = '', awayAt = 0;
   async function pinHash(p){
     var d = new TextEncoder().encode('planner:' + p);
@@ -2131,7 +2222,7 @@ html.locked .lock{display:flex}
     return 'f' + x;
   }
   function pinGet(){ try { return localStorage.getItem(PINK); } catch (e) { return null; } }
-  function lockDots(){ $('lockDots').textContent = '\u25cf'.repeat(pinBuf.length) + '\u25cb'.repeat(4 - pinBuf.length); }
+  function lockDots(){ $('lockDots').textContent = '●'.repeat(pinBuf.length) + '○'.repeat(4 - pinBuf.length); }
   function lockShow(){ if (!pinGet()) return; pinBuf = ''; $('lockMsg').textContent = ''; lockDots(); document.documentElement.classList.add('locked'); }
   $('lockKeys').addEventListener('click', async e => {
     var b = e.target.closest('button');
@@ -2144,25 +2235,25 @@ html.locked .lock{display:flex}
       var ok = (await pinHash(pinBuf)) === pinGet();
       pinBuf = '';
       if (ok) document.documentElement.classList.remove('locked');
-      else { $('lockMsg').textContent = '\u041d\u0435\u0432\u0435\u0440\u043d\u044b\u0439 PIN'; lockDots(); }
+      else { $('lockMsg').textContent = 'Неверный PIN'; lockDots(); }
     }
   });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) awayAt = Date.now();
     else if (awayAt && Date.now() - awayAt > 60000) lockShow();
   });
-  function pinSync(){ $('pinSt').textContent = pinGet() ? 'PIN \u0432\u043a\u043b\u044e\u0447\u0451\u043d' : 'PIN \u043d\u0435 \u0437\u0430\u0434\u0430\u043d'; }
+  function pinSync(){ $('pinSt').textContent = pinGet() ? 'PIN включён' : 'PIN не задан'; }
   $('pinSet').addEventListener('click', async () => {
     var v = $('pinIn').value.trim();
-    if (!/^\d{4}$/.test(v)){ toast('PIN: \u0440\u043e\u0432\u043d\u043e 4 \u0446\u0438\u0444\u0440\u044b'); return; }
-    try { localStorage.setItem(PINK, await pinHash(v)); } catch (e) { toast('\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0441\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c PIN'); return; }
-    $('pinIn').value = ''; pinSync(); toast('PIN \u0443\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d');
+    if (!/^\d{4}$/.test(v)){ toast('PIN: ровно 4 цифры'); return; }
+    try { localStorage.setItem(PINK, await pinHash(v)); } catch (e) { toast('Не удалось сохранить PIN'); return; }
+    $('pinIn').value = ''; pinSync(); toast('PIN установлен');
   });
   $('pinOff').addEventListener('click', async () => {
-    if (!pinGet()){ toast('PIN \u043d\u0435 \u0437\u0430\u0434\u0430\u043d'); return; }
-    if ((await pinHash($('pinIn').value.trim())) !== pinGet()){ toast('\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0442\u0435\u043a\u0443\u0449\u0438\u0439 PIN \u0432 \u043f\u043e\u043b\u0435 \u0438 \u043d\u0430\u0436\u043c\u0438\u0442\u0435 \u00ab\u0423\u0431\u0440\u0430\u0442\u044c\u00bb'); return; }
+    if (!pinGet()){ toast('PIN не задан'); return; }
+    if ((await pinHash($('pinIn').value.trim())) !== pinGet()){ toast('Введите текущий PIN в поле и нажмите «Убрать»'); return; }
     try { localStorage.removeItem(PINK); } catch (e) {}
-    $('pinIn').value = ''; pinSync(); toast('PIN \u0443\u0431\u0440\u0430\u043d');
+    $('pinIn').value = ''; pinSync(); toast('PIN убран');
   });
   var rsOrig = renderSettings;
   renderSettings = function(){ rsOrig(); pinSync(); };
@@ -2177,7 +2268,7 @@ html.locked .lock{display:flex}
     if (!title) return;
     var sv = $('gSprint').value === '' ? null : Number($('gSprint').value);
     if (sv != null && state.goals.filter(x => x.s === sv).length >= 3){ sv = null; toast('В спринте уже три главные цели'); }
-    var ng = { id: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), title: title, desc: $('gDesc').value.trim(), due: $('gDue').value };
+    var ng = { id: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), title: title, desc: $('gDesc').value.trim(), due: $('gDue').value, need: Math.max(0, Math.floor(Number($('gNeed').value) || 0)) };
     if (sv != null) ng.s = sv;
     state.goals.push(ng); $('gSprint').innerHTML = '';
     $('goalForm').reset(); setDue(); save(); renderGoals();
